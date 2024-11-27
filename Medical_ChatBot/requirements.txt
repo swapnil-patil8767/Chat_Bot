@@ -2,7 +2,6 @@ streamlit
 langchain_community
 langchain
 dotenv
-os
 langchain_groq
 langchain_google_genai
 langchain_core
