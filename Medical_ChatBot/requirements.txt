@@ -5,3 +5,5 @@ dotenv
 langchain_groq
 langchain_google_genai
 langchain_core
+flask 
+flask-cors
