@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Chatbot 🏥</title>
+    <style>
+        /* Previous CSS styles remain the same */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            overflow-y: auto;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .ai-avatar {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .user-avatar {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .message-content {
+            background-color: #ffffff;
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            max-width: 70%;
+            white-space: pre-wrap;
+        }
+
+        .ai .message-content {
+            background-color: #f8f9fa;
+        }
+
+        .user .message-content {
+            background-color: #e3f2fd;
+            margin-left: auto;
+        }
+
+        .input-container {
+            background-color: #ffffff;
+            padding: 1rem 2rem;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 1.5rem;
+            outline: none;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #1976d2;
+        }
+
+        .send-button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+
+        .send-button:hover {
+            background-color: #1565c0;
+        }
+
+        .send-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #ffffff;
+            color: #6c757d;
+            font-size: 0.875rem;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .thinking {
+            display: flex;
+            gap: 0.3rem;
+            padding: 0.5rem 0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #1976d2;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+        }
+
+        .error-message {
+            color: #dc3545;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 0.25rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Medical Chatbot Assistant 🏥</h1>
+    </header>
+
+    <div class="chat-container">
+        <div class="message ai">
+            <div class="avatar ai-avatar">🏥</div>
+            <div class="message-content">
+                👋 Hello! I'm your medical assistant. I can help you with general health questions and information. Please remember that I'm not a substitute for professional medical advice. How can I help you today?
+            </div>
+        </div>
+    </div>
+
+    <div class="input-container">
+        <div class="input-wrapper">
+            <input type="text" class="chat-input" placeholder="Type your health-related question here..." />
+            <button class="send-button">Send</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        Remember: This chatbot is for informational purposes only. Always consult with a healthcare provider for medical advice.
+    </footer>
+
+    <script>
+        const chatContainer = document.querySelector('.chat-container');
+        const chatInput = document.querySelector('.chat-input');
+        const sendButton = document.querySelector('.send-button');
+        
+        let isWaitingForResponse = false;
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const messageHTML = isUser ? `
+                <div class="message-content">${content}</div>
+                <div class="avatar user-avatar">👤</div>
+            ` : `
+                <div class="avatar ai-avatar">🏥</div>
+                <div class="message-content">${content}</div>
+            `;
+            
+            messageDiv.innerHTML = messageHTML;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showThinking() {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'message ai thinking-message';
+            thinkingDiv.innerHTML = `
+                <div class="avatar ai-avatar">🏥</div>
+                <div class="message-content">
+                    <div class="thinking">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(thinkingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return thinkingDiv;
+        }
+
+        function setLoading(loading) {
+            isWaitingForResponse = loading;
+            sendButton.disabled = loading;
+            chatInput.disabled = loading;
+            if (loading) {
+                sendButton.textContent = 'Sending...';
+            } else {
+                sendButton.textContent = 'Send';
+            }
+        }
+
+        async function handleSend() {
+            const message = chatInput.value.trim();
+            if (message && !isWaitingForResponse) {
+                // Clear input and add user message
+                chatInput.value = '';
+                addMessage(message, true);
+                
+                // Show thinking animation and disable input
+                setLoading(true);
+                const thinkingDiv = showThinking();
+
+                try {
+                    // Send message to backend
+                    const response = await fetch('http://localhost:5000/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+                    
+                    // Remove thinking animation
+                    thinkingDiv.remove();
+
+                    if (data.success) {
+                        // Add AI response
+                        addMessage(data.response);
+                    } else {
+                        // Show error message
+                        addMessage('I apologize, but I encountered an error processing your request. Please try again.');
+                    }
+                } catch (error) {
+                    // Remove thinking animation and show error
+                    thinkingDiv.remove();
+                    addMessage('I apologize, but I\'m having trouble connecting to the server. Please check your connection and try again.');
+                    console.error('Error:', error);
+                }
+
+                // Re-enable input
+                setLoading(false);
+            }
+        }
+
+        sendButton.addEventListener('click', handleSend);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSend();
+            }
+        });
+
+        // Initial focus on input
+        chatInput.focus();
+    </script>
+</body>
+</html>
